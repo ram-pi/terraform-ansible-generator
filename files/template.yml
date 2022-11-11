@@ -1,0 +1,79 @@
+all:
+  vars:
+    ansible_connection: ssh
+    ansible_become: true
+    ansible_ssh_private_key_file: private.pem
+    jmxexporter_enabled: true
+    jolokia_enabled: true
+
+    zookeeper_jmxexporter_config_source_path: $PATH_TO_JMX_MONITORING_STACKS/jmx-monitoring-stacks/shared-assets/jmx-exporter/zookeeper.yml
+    kafka_broker_jmxexporter_config_source_path: $PATH_TO_JMX_MONITORING_STACKS/jmx-monitoring-stacks/shared-assets/jmx-exporter/kafka_broker.yml
+    schema_registry_jmxexporter_config_source_path: $PATH_TO_JMX_MONITORING_STACKS/jmx-monitoring-stacks/shared-assets/jmx-exporter/confluent_schemaregistry.yml
+    kafka_connect_jmxexporter_config_source_path: $PATH_TO_JMX_MONITORING_STACKS/jmx-monitoring-stacks/shared-assets/jmx-exporter/kafka_connect.yml
+    kafka_rest_jmxexporter_config_source_path: $PATH_TO_JMX_MONITORING_STACKS/jmx-monitoring-stacks/shared-assets/jmx-exporter/confluent_rest.yml
+    ksql_jmxexporter_config_source_path: $PATH_TO_JMX_MONITORING_STACKS/jmx-monitoring-stacks/shared-assets/jmx-exporter/confluent_ksql.yml
+
+    zookeeper_custom_properties:
+      4lw.commands.whitelist: "*"
+    
+    kafka_broker:
+      properties:
+        auto.create.topics.enable: true
+        default.replication.factor: 3
+        delete.topic.enable: true
+
+    #
+    # Custom log4j
+    #
+    # kafka_broker_copy_files:
+    #   - source_path: "{{inventory_dir}}/log4j.properties"
+    #     destination_path: /etc/kafka/custom.log4j.properties
+    # kafka_broker_service_environment_overrides:
+    #     KAFKA_LOG4J_OPTS: "-Dlog4j.configuration=file:/etc/kafka/custom.log4j.properties"
+
+zookeeper:
+  hosts:
+    {{node.internal.1}}:
+      ansible_host: {{node.external.1}}
+    {{node.internal.2}}: 
+      ansible_host: {{node.external.2}}
+    {{node.internal.3}}:
+      ansible_host: {{node.external.3}}
+
+kafka_broker:
+  hosts:
+    {{node.internal.1}}:
+      ansible_host: {{node.external.1}}
+      broker_id: 0
+    {{node.internal.2}}: 
+      ansible_host: {{node.external.2}}
+      broker_id: 1
+    {{node.internal.3}}:
+      ansible_host: {{node.external.3}}
+      broker_id: 2
+
+main:
+  vars:
+    kafka_connect_group_id: connect-main
+    kafka_connect_confluent_hub_plugins:
+      - confluentinc/kafka-connect-datagen:0.6.0
+      # - confluentinc/kafka-connect-replicator:7.2.1
+      - confluentinc/kafka-connect-jdbc:10.5.2
+    kafka_connect_plugins_path:
+      - /usr/share/java
+      - /etc/kafka-connect-replicator
+  hosts:
+    {{node.internal.3}}:
+      ansible_host: {{node.external.3}}
+
+kafka_connect:
+  children:
+    main:
+
+control_center:
+  hosts:
+    {{node.internal.1}}:
+      ansible_host: {{node.external.1}}
+  vars:
+    kafka_connect_cluster_ansible_group_names:
+      - main
