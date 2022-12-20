@@ -5,6 +5,7 @@ It provides you a key to access via ssh to the VMs.
 You'll need:
 
 - VPC on Google Cloud  
+- gcloud already logged 
 
 ## Variables
 
