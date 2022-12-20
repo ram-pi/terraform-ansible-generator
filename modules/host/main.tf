@@ -32,6 +32,7 @@ resource "google_compute_instance" "host" {
   boot_disk {
     initialize_params {
       image = data.google_compute_image.host.self_link
+      size  = 50
     }
   }
 

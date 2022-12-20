@@ -6,6 +6,10 @@ output "cp_instance_internal_ip" {
   value = module.cp_instance[*].internal_ip
 }
 
+output "cp_instance_hostname" {
+  value = module.cp_instance[*].hostname
+}
+
 output "ssh_key_filename" {
   value = module.ssh_key.filename
 }
